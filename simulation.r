@@ -180,25 +180,6 @@ apply(p0_hat.sample,2,sd)
 colMeans(log(p0_hat.sample/0.2))
 colMeans(log(p0_hat.est/p0_hat.sample))
 
-mse.est <- matrix(0,nrow = 500,ncol = 4)
-for (i in 1:4) {
-  mse.est[,i] <- (p0_hat.est[,i]-0.2)^2
-}
 
-
-sqrt(colMeans(mse.est))
-apply(mse.est,2,sd)
-
-rmse.est <- round(sqrt(mse.est),digits = 6)
-
-mse.sample <- matrix(0,nrow = 500,ncol = 4)
-for (i in 1:4) {
-  mse.sample[,i] <- ((p0_hat.sample[,i]-0.2)^2)
-}
-
-sqrt(colMeans(mse.sample))
-apply(mse.sample,2,sd)
-
-rmse.sample <- round(sqrt(mse.sample),digits = 6)
 
 
