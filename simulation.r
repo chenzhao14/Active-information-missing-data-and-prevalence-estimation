@@ -78,25 +78,48 @@ outcome.ex3.df<-as.data.frame(outcome.ex3)
 
 
 
-p1<-ggplot(outcome.100.df[1:m,], aes(sample=V1))+
+p1<-ggplot(outcome.ex3.df[1:m,], aes(sample=V1))+
   stat_qq()+
   ggtitle("QQ-Plot of MAR when population = 10000")
 
-p2<-ggplot(outcome.100.df[1:m,], aes(sample=V2))+
+p2<-ggplot(outcome.ex3.df[1:m,], aes(sample=V2))+
   stat_qq()+
   ggtitle("QQ-Plot of MAR when population = 100000")
 
-p3<-ggplot(outcome.100.df[1:m,], aes(sample=V3))+
+p3<-ggplot(outcome.ex3.df[1:m,], aes(sample=V3))+
   stat_qq()+
   ggtitle("QQ-Plot of MAR when population = 1000000")
 
-p4<-ggplot(outcome.100.df[1:m,], aes(sample=V4))+
+p4<-ggplot(outcome.ex3.df[1:m,], aes(sample=V4))+
   stat_qq()+
   ggtitle("QQ-Plot of MAR when population = 10000000")
 
 
 rho5.qq1<-ggpubr::ggarrange(p1,p2,p3,p4,ncol=2,nrow=2)
 rho5.qq1
+                    
+rho5.qq1<-ggpubr::ggarrange(p1,p2,p3,p4,ncol=2,nrow=2)
+rho5.qq1
+
+p0_hat.est <- outcome.ex3.df[1:m,]
+p0_hat.sample <- outcome.ex3.df[(m+1):(2*m),]
+
+colm <- colMeans(p0_hat.est)
+colm2 <- colMeans(p0_hat.sample)
+##
+log(colMeans(p0_hat.est)/0.2)
+log(colMeans(p0_hat.sample)/0.2)
+log(colMeans(p0_hat.est)/colMeans(p0_hat.sample))
+##
+apply(p0_hat.sample,2,sd)
+
+colMeans(log(p0_hat.sample/0.2))
+colMeans(log(p0_hat.est/p0_hat.sample))
+
+mse.est <- matrix(0,nrow = 500,ncol = 4)
+for (i in 1:4) {
+  mse.est[,i] <- (p0_hat.est[,i]-0.2)^2
+}
 
 
 
