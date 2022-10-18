@@ -31,6 +31,19 @@ test_group <- function(population,pi){
   return(tested_group)
 }
 
+get_v3 <- function(N,rho1,tested_group){
+  N_T1 <- nrow(filter(tested_group,symptom == 1))
+  N_T0 <- nrow(filter(tested_group,symptom == 0))
+  N_T11 <- nrow(filter(tested_group,symptom == 1,disease==1))
+  N_T01 <- nrow(filter(tested_group,symptom == 0,disease==1))
+  rho0 <- 1-rho1
+  a<-rho1*(1-(N_T1)/(N*rho1))/((N_T1)/(N*rho1))
+  b<-rho0*(1-N_T0/(N*rho0))/(N_T0/(N*rho0))
+  v31<- a*N_T11/N_T1*(1-N_T11/N_T1)
+  v30<- b*N_T01/N_T0*(1-N_T01/N_T0)
+  return(v31+v30)
+}
+
 
 get_test_prevalence <- function(n,tested_group){
   N <- n
@@ -49,15 +62,21 @@ get_test_prevalence <- function(n,tested_group){
   return(c(res,sample))
 }
 
+
 run_model_mar <- function(n,p0,rho1,pi,rho11){
   population <- get_population_sympton_disease(n,rho1,rho11,p0)
   tested_group <- test_group(population,pi)
   test_patient_prev <- get_test_prevalence(n,tested_group)
-  return(test_patient_prev)
+  v3 <- get_v3(n,rho1,tested_group)
+  sigma <- sqrt(v3/n)
+  moe <- qnorm(.975)*sigma/(test_patient_prev*(1-test_patient_prev))
+  ci.upper <- invlogit(logit(test_patient_prev)+moe)
+  ci.lower <- invlogit(logit(test_patient_prev)-moe)
+  return(c(p0_hat = test_patient_prev, ci.upper = ci.upper, ci.lower = ci.lower))
 }
 
 repeat_function <- function(m,x){
-  res <- matrix(0,ncol=2,nrow = m)
+  res <- matrix(0,ncol=3,nrow = m)
   i = 1
   repeat{
     if(i>m)
@@ -78,29 +97,6 @@ outcome.ex3.df<-as.data.frame(outcome.ex3)
 
 
 
-p1<-ggplot(outcome.ex3.df[1:m,], aes(sample=V1))+
-  stat_qq()+
-  ggtitle("QQ-Plot of MAR when population = 10000")
-
-p2<-ggplot(outcome.ex3.df[1:m,], aes(sample=V2))+
-  stat_qq()+
-  ggtitle("QQ-Plot of MAR when population = 100000")
-
-p3<-ggplot(outcome.ex3.df[1:m,], aes(sample=V3))+
-  stat_qq()+
-  ggtitle("QQ-Plot of MAR when population = 1000000")
-
-p4<-ggplot(outcome.ex3.df[1:m,], aes(sample=V4))+
-  stat_qq()+
-  ggtitle("QQ-Plot of MAR when population = 10000000")
-
-
-rho5.qq1<-ggpubr::ggarrange(p1,p2,p3,p4,ncol=2,nrow=2)
-rho5.qq1
-                    
-rho5.qq1<-ggpubr::ggarrange(p1,p2,p3,p4,ncol=2,nrow=2)
-rho5.qq1
-
 p0_hat.est <- outcome.ex3.df[1:m,]
 p0_hat.sample <- outcome.ex3.df[(m+1):(2*m),]
 
@@ -120,6 +116,53 @@ mse.est <- matrix(0,nrow = 500,ncol = 4)
 for (i in 1:4) {
   mse.est[,i] <- (p0_hat.est[,i]-0.2)^2
 }
+                    
+                    
+p0_hat.value <- outcome.ex3.df[1:m,]
+p0_hat.upper <- outcome.ex3.df[(m+1):(2*m),]
+p0_hat.lower <- outcome.ex3.df[(2*m+1):(3*m),]
+
+p0_hat.ci <- cbind(p0_hat.value,p0_hat.upper,p0_hat.lower)
+colnames(p0_hat.ci) <- c("v1","v2","v3","v4","v1.u","v2.u","v3.u","v4.u","v1.l","v2.l","v3.l","v4.l")
+
+
+poN_10000<-mean(p0_hat.ci$v1)
+poN_100000<-mean(p0_hat.ci$v2)
+poN_1000000<-mean(p0_hat.ci$v3)
+poN_10000000<-mean(p0_hat.ci$v4)
+
+
+g1<-ggplot(p0_hat.ci,aes(x=1:nrow(p0_hat.ci),y=v1))+
+  geom_point()+
+  geom_errorbar(mapping=aes( ymin=v1.u, ymax=v1.l))+
+  ggtitle("95% CI of MAR when population = 1000")+
+  geom_hline(yintercept=poN_10000, linetype="dashed", color = "red")+
+  ylim(0.000, 0.03)
+
+g2<-ggplot(p0_hat.ci, aes(x=1:nrow(p0_hat.ci),y=v2))+
+  geom_point()+
+  geom_errorbar(mapping=aes( ymin=v2.u, ymax=v2.l))+
+  ggtitle("95% CI of MAR when population = 10000")+
+  geom_hline(yintercept=poN_100000, linetype="dashed", color = "red")+
+  ylim(0.007, 0.015)
+
+g3<-ggplot(p0_hat.ci, aes(x=1:nrow(p0_hat.ci),y=v3))+
+  geom_point()+
+  geom_errorbar(mapping=aes( ymin=v3.u, ymax=v3.l))+
+  ggtitle("95% CI of MAR when population = 100000")+
+  geom_hline(yintercept=poN_1000000, linetype="dashed", color = "red")+
+  ylim(0.007, 0.015)
+
+g4<-ggplot(p0_hat.ci, aes(x=1:nrow(p0_hat.ci),y=v4))+
+  geom_point()+
+  geom_errorbar(mapping=aes( ymin=v4.u, ymax=v4.l))+
+  ggtitle("95% CI of MAR when population = 1000000")+
+  geom_hline(yintercept=poN_10000000, linetype="dashed", color = "red")+
+  ylim(0.007, 0.015)
+
+rho5.ci<-ggpubr::ggarrange(g1,g2,g3,g4,ncol=2,nrow=2)
+
+rho5.ci
 
 
 
