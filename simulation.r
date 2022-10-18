@@ -6,8 +6,7 @@ library(ggplot2)
 
 ## Generate population
 get_population_sympton <- function(n,rho1) {
-  population <- data.frame(id = 1:n,
-                           symptom = rbinom(n,1,rho1))
+  population <- data.frame(id = 1:n, symptom = rbinom(n,1,rho1))
   return(population)
 }
 
@@ -170,11 +169,11 @@ p0_hat.sample <- outcome.100.df[(m+1):(2*m),]
 
 colm <- colMeans(p0_hat.est)
 colm2 <- colMeans(p0_hat.sample)
-##
+## Active Information 
 log(colMeans(p0_hat.est)/0.2)
 log(colMeans(p0_hat.sample)/0.2)
 log(colMeans(p0_hat.est)/colMeans(p0_hat.sample))
-##
+## Active Information 
 apply(p0_hat.sample,2,sd)
 
 colMeans(log(p0_hat.sample/0.2))
